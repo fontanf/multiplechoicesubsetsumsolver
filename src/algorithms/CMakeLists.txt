@@ -1,0 +1,8 @@
+add_library(MultipleChoiceSubsetSumSolver_dynamic_programming_bellman)
+target_sources(MultipleChoiceSubsetSumSolver_dynamic_programming_bellman PRIVATE
+    dynamic_programming_bellman.cpp)
+target_include_directories(MultipleChoiceSubsetSumSolver_dynamic_programming_bellman PUBLIC
+    ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(MultipleChoiceSubsetSumSolver_dynamic_programming_bellman PUBLIC
+    MultipleChoiceSubsetSumSolver)
+add_library(MultipleChoiceSubsetSumSolver::dynamic_programming_bellman ALIAS MultipleChoiceSubsetSumSolver_dynamic_programming_bellman)
