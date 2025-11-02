@@ -6,9 +6,9 @@ A solver for the multiple-choice subset sum problem
 
 * Dynamic programming
   * Bellman
-    * Array `-a dynamic-programming-bellman-array`
-    * Word RAM (only optimal value) `-a dynamic-programming-bellman-word-ram`
-    * Word RAM with recursive scheme `-a dynamic-programming-bellman-word-ram-rec`
+    * Array `--algorithm dynamic-programming-bellman-array`
+    * Word RAM (only optimal value) `--algorithm dynamic-programming-bellman-word-ram`
+    * Word RAM with recursive scheme `--algorithm dynamic-programming-bellman-word-ram-rec`
 
 ## Usage
 
@@ -26,10 +26,7 @@ Download data:
 python3 scripts/download_data.py
 ```
 
-
 Run tests:
 ```
-export MULTIPLE_CHOICE_SUBSET_SUM_DATA=$(pwd)/data
-cd build/test
-ctest --parallel
+ctest --parallel --output-on-failure  --test-dir build/test
 ```

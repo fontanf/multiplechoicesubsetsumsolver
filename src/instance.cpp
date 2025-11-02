@@ -64,10 +64,9 @@ void Instance::write(
 
     file << number_of_groups() << " " << capacity() << std::endl;
     for (GroupId group_id = 0; group_id < number_of_groups(); ++group_id) {
+        const Group& group = this->group(group_id);
         file << number_of_items(group_id);
-        for (ItemId item_id = 0;
-                item_id < number_of_items(group_id);
-                ++item_id)
+        for (ItemId item_id: group.item_ids)
             file << " " << item(item_id).weight;
         file << std::endl;
     }
