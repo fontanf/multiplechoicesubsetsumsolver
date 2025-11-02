@@ -2,8 +2,6 @@
 
 #include "multiplechoicesubsetsumsolver/algorithm_formatter.hpp"
 
-#include <bitset>
-
 using namespace multiplechoicesubsetsumsolver;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -206,16 +204,12 @@ std::vector<uint64_t> dynamic_programming_bellman_word_ram_rec_opts(
 {
     Weight capacity_number_of_words = (capacity >> 6);
     Weight capacity_number_of_bits_to_shift = capacity - (capacity_number_of_words << 6);
-    std::vector<uint64_t> values(capacity_number_of_words + 1, 0);
-    values[0] = 1;
+    std::vector<uint64_t> values_prev(capacity_number_of_words + 1, 0);
+    std::vector<uint64_t> values_next(capacity_number_of_words + 1, 0);
+    values_next[0] = 1;
 
     Weight weight_sum = 0;
-    std::vector<Weight> number_of_words_to_shift;
-    std::vector<Weight> number_of_bits_to_shift_left;
-    std::vector<Weight> number_of_bits_to_shift_right;
-    std::vector<Weight> word_write;
     for (GroupId group_id = group_id_1; group_id < group_id_2; ++group_id) {
-        ItemId group_size = instance.number_of_items(group_id);
 
         // Check time
         if (parameters.timer.needs_to_end())
@@ -226,48 +220,41 @@ std::vector<uint64_t> dynamic_programming_bellman_word_ram_rec_opts(
             weight_max = std::max(weight_max, instance.item(item_id).weight);
         weight_sum += weight_max;
 
-        Weight word_read = std::min(capacity_number_of_words, (weight_sum >> 6));
-        number_of_words_to_shift.clear();
-        number_of_bits_to_shift_left.clear();
-        number_of_bits_to_shift_right.clear();
-        word_write.clear();
-        number_of_words_to_shift.resize(group_size);
-        number_of_bits_to_shift_left.resize(group_size);
-        number_of_bits_to_shift_right.resize(group_size);
-        word_write.resize(group_size);
-        for (ItemId pos = 0; pos < group_size; ++pos) {
-            ItemId item_id = instance.group(group_id).item_ids[pos];
+        values_prev = values_next;
+
+        for (ItemId item_id: instance.group(group_id).item_ids) {
             const Item& item = instance.item(item_id);
-            number_of_words_to_shift[pos] = (item.weight >> 6);
-            number_of_bits_to_shift_left[pos] = item.weight - (number_of_words_to_shift[pos] << 6);
-            number_of_bits_to_shift_right[pos] = 64 - number_of_bits_to_shift_left[pos];
-            word_write[pos] = word_read - number_of_words_to_shift[pos];
-        }
-
-        while (word_read >= 0) {
-            for (ItemId pos = 0; pos < group_size; ++pos) {
-                if (number_of_bits_to_shift_left[pos] != 0) {
-                    if (word_write[pos] > 0) {
-                        values[word_read] |= (values[word_write[pos]] << number_of_bits_to_shift_left[pos]);
-                        values[word_read] |= (values[word_write[pos] - 1] >> number_of_bits_to_shift_right[pos]);
-                    } else if (word_write[pos] == 0) {
-                        values[word_read] = (values[word_write[pos]] << number_of_bits_to_shift_left[pos]);
-                    }
-                } else {
-                    if (word_write[pos] >= 0) {
-                        values[word_read] |= values[word_write[pos]];
-                    }
+            if (item.weight > capacity)
+                continue;
+            Weight number_of_words_to_shift = (item.weight >> 6);
+            Weight number_of_bits_to_shift_left = item.weight - (number_of_words_to_shift << 6);
+            Weight number_of_bits_to_shift_right = 64 - number_of_bits_to_shift_left;
+            weight_sum += item.weight;
+            Weight word_read = std::min(capacity_number_of_words, (weight_sum >> 6));
+            Weight word_write = word_read - number_of_words_to_shift;
+            if (number_of_bits_to_shift_left != 0) {
+                while (word_write > 0) {
+                    values_next[word_read] |= (values_prev[word_write] << number_of_bits_to_shift_left);
+                    values_next[word_read] |= (values_prev[word_write - 1] >> number_of_bits_to_shift_right);
+                    word_read--;
+                    word_write--;
                 }
-                word_write[pos]--;
+                values_next[word_read] |= (values_prev[word_write] << number_of_bits_to_shift_left);
+            } else {
+                while (word_write >= 0) {
+                    values_next[word_read] |= values_prev[word_write];
+                    word_read--;
+                    word_write--;
+                }
             }
-            word_read--;
         }
-
-        if (((values[capacity_number_of_words] >> capacity_number_of_bits_to_shift) & 1) == 1)
-            break;
+        for (Weight c = 0; c <= capacity; ++c) {
+            Weight word = (capacity >> 6);
+            Weight bits = capacity - (word << 6);
+        }
     }
 
-    return values;
+    return values_next;
 }
 
 void dynamic_programming_bellman_word_ram_rec_rec(
@@ -331,9 +318,9 @@ void dynamic_programming_bellman_word_ram_rec_rec(
         }
     }
     //std::cout
-    //    << "n1 " << n1
+    //    << "n1 " << group_id_1
     //    << " k " << k
-    //    << " n2 " << n2
+    //    << " n2 " << group_id_2
     //    << " c " << capacity
     //    << " capacity_1_best " << capacity_1_best
     //    << " capacity_2_best " << capacity_2_best
@@ -342,7 +329,8 @@ void dynamic_programming_bellman_word_ram_rec_rec(
 
     if (group_id_1 == k - 1) {
         for (ItemId item_id: instance.group(group_id_1).item_ids) {
-            if (capacity_1_best == instance.item(item_id).weight) {
+            const Item& item = instance.item(item_id);
+            if (capacity_1_best == item.weight) {
                 solution.add(item_id);
                 break;
             }
@@ -350,14 +338,15 @@ void dynamic_programming_bellman_word_ram_rec_rec(
     }
     if (k == group_id_2 - 1) {
         for (ItemId item_id: instance.group(k).item_ids) {
-            if (capacity_2_best == instance.item(item_id).weight) {
-                solution.add(k);
+            const Item& item = instance.item(item_id);
+            if (capacity_2_best == item.weight) {
+                solution.add(item_id);
                 break;
             }
         }
     }
 
-    if (group_id_1 != k - 1) {
+    if (capacity_1_best > 0 && group_id_1 != k - 1) {
         dynamic_programming_bellman_word_ram_rec_rec(
                 instance,
                 group_id_1,
@@ -366,7 +355,7 @@ void dynamic_programming_bellman_word_ram_rec_rec(
                 solution,
                 parameters);
     }
-    if (k != group_id_2 - 1) {
+    if (capacity_2_best > 0 && k != group_id_2 - 1) {
         dynamic_programming_bellman_word_ram_rec_rec(
                 instance,
                 k,
