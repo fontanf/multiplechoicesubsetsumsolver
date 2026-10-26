@@ -18,4 +18,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add sub-directories.
 add_subdirectory(extern)
 add_subdirectory(src)
-add_subdirectory(test)
+if(MULTIPLECHOICESUBSETSUMSOLVER_BUILD_TEST)
+  add_subdirectory(test)
+endif()
