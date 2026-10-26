@@ -123,4 +123,13 @@ INSTANTIATE_TEST_SUITE_P(
             }, {
                 fs::path("data") / "tests" / "single_group_too_heavy" / "instance.txt",
                 fs::path("data") / "tests" / "single_group_too_heavy" / "solution.txt",
+            }, {
+                // The greatest common divisor of the weights is 10.
+                fs::path("data") / "tests" / "gcd" / "instance.txt",
+                fs::path("data") / "tests" / "gcd" / "solution.txt",
+            }, {
+                // The greatest common divisor of the weights is 10, and the
+                // capacity is not a multiple of it.
+                fs::path("data") / "tests" / "gcd_capacity_rounded_down" / "instance.txt",
+                fs::path("data") / "tests" / "gcd_capacity_rounded_down" / "solution.txt",
             }}));
