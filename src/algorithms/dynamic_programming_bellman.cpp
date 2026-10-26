@@ -376,13 +376,16 @@ Output multiplechoicesubsetsumsolver::dynamic_programming_bellman_word_ram_rec(
     algorithm_formatter.print_header();
 
     Solution solution(instance);
-    dynamic_programming_bellman_word_ram_rec_rec(
-        instance,
-        0,
-        instance.number_of_groups(),
-        instance.capacity(),
-        solution,
-        parameters);
+    // Without group, the first half of the recursion would read group '0'.
+    if (instance.number_of_groups() > 0) {
+        dynamic_programming_bellman_word_ram_rec_rec(
+            instance,
+            0,
+            instance.number_of_groups(),
+            instance.capacity(),
+            solution,
+            parameters);
+    }
     if (parameters.timer.needs_to_end()) {
         algorithm_formatter.end();
         return output;
